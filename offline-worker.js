@@ -1,6 +1,8 @@
 /* offline-worker.js (Vercel-proof, no manifest required)
    - Precaches "/" so the main menu works offline
    - Runtime caches any same-origin GET you visit (assets/pages/games) so they become available offline after first open
+   - Supports "DOWNLOAD_FOR_OFFLINE" (and "DOWNLOAD_CORE") messages from the homepage button
+   - Sends a {type:"cached"} message back to all open windows when done
 */
 const VERSION = "seraph-offline-vercel-v1";
 const CORE_CACHE = `${VERSION}-core`;
@@ -26,12 +28,18 @@ self.addEventListener("activate", (event) => {
   })());
 });
 
-// Optional: user-triggered warm cache (just caches "/" again)
+// User-triggered warm cache (caches "/" again) + notifies the page
 self.addEventListener("message", (event) => {
-  if (event.data?.type !== "DOWNLOAD_FOR_OFFLINE") return;
+  const t = event.data?.type;
+  if (t !== "DOWNLOAD_FOR_OFFLINE" && t !== "DOWNLOAD_CORE") return;
+
   event.waitUntil((async () => {
     const cache = await caches.open(CORE_CACHE);
     await cache.addAll(CORE_URLS);
+
+    // tell all open tabs "cached"
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of clients) c.postMessage({ type: "cached" });
   })());
 });
 
