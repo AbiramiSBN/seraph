@@ -215,12 +215,16 @@
               } else if (d.type === "offline-total") {
                 status.style.display = "inline";
                 status.textContent = `• 0/${d.total}`;
+              } else if (d.type === "offline-current") {
+                // ✅ Added: show current file so “stuck at 425” becomes “stuck at /path/to/file”
+                status.style.display = "inline";
+                status.textContent = `• ${d.index}/${d.total} ${d.path}`;
               } else if (d.type === "offline-progress") {
                 status.style.display = "inline";
-                status.textContent = `• ${d.done}/${d.total} (failed ${d.failed})`;
+                status.textContent = `• ${d.done}/${d.total} (failed ${d.failed}, skipped ${d.skipped})`;
               } else if (d.type === "offline-finished") {
                 status.style.display = "inline";
-                status.textContent = `• offline ready ✅ (${d.done}/${d.total}, failed ${d.failed})`;
+                status.textContent = `• offline ready ✅ (${d.done}/${d.total}, failed ${d.failed}, skipped ${d.skipped})`;
                 if (dl) dl.textContent = "⬇️ download for offline";
               } else if (d.type === "offline-error") {
                 status.style.display = "inline";
