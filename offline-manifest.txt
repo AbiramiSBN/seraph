@@ -1772,6 +1772,7 @@
 /apps/zipopener/jquery-1.12.4.min.js
 /apps/zipopener/jszip.min.js
 /apps/zipopener/zip.jpg
+/compile.sh
 /games/10minutestilldawn/Build/10MinutesTillDawnWebGL.data.unityweb
 /games/10minutestilldawn/Build/10MinutesTillDawnWebGL.json
 /games/10minutestilldawn/Build/10MinutesTillDawnWebGL.wasm.code.unityweb
@@ -4362,19 +4363,6 @@
 /games/driftboss/media/scenes/smoke.png
 /games/driftboss/media/scenes/start_line.png
 /games/driftboss/media/scenes/trail.png
-/games/drifthunters/UnityLoader2019.js
-/games/drifthunters/dh.asm.code.unityweb
-/games/drifthunters/dh.asm.framework.unityweb
-/games/drifthunters/dh.asm.memory.unityweb
-/games/drifthunters/dh.data.unityweb.000
-/games/drifthunters/dh.data.unityweb.001
-/games/drifthunters/dh.data.unityweb.002
-/games/drifthunters/dh.data.unityweb.003
-/games/drifthunters/dh.data.unityweb.004
-/games/drifthunters/dh.data.unityweb.005
-/games/drifthunters/dh.json
-/games/drifthunters/icon.png
-/games/drifthunters/index.html
 /games/driftmania/driftmania.js
 /games/driftmania/index.html
 /games/drilldozer/index.html
@@ -16707,6 +16695,7 @@
 /images/backgrounds/seraph/offlinebg.jpg
 /images/backgrounds/seraph/settingsbg.jpg
 /images/backgrounds/seraph/updatelogbg.jpg
+/images/backgrounds/seraph/wallpaper2.jpeg
 /images/backgrounds/subzero/404bg.jpg
 /images/backgrounds/subzero/appsbg.jpg
 /images/backgrounds/subzero/cookiesbg.jpg
