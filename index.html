@@ -21,7 +21,7 @@
     <meta property="og:type" content="website">
     <meta property="og:description" content="an open source games site hosting 500+ games, useful utilities, powerful settings + a clean user interface">
 
-    <!-- Added: minimal styles for the download button (won’t affect your CSS) -->
+    <!-- Added: minimal styles for download button + status -->
     <style>
       .offline-row {
         display: flex;
@@ -72,7 +72,6 @@
               <li>supports ruffle/flash + works seamlessly with compatible games</li>
             </ul>
           </li>
-
           <li>added 132 games
             <li>sega genesis: comix zone, ecco the dolphin, gunstar heroes, phantasy star iv, ranger x, ristar, shining force, shinobi iii, sonic the hedgehog, sonic the hedgehog 2, streets of rage 2, vectorman, vectorman 2</li>
             <li>game boy: kirby’s dreamland 2, link’s awakening dx, metroid ii, super mario land 2, warioland ii, castlevania: aria of sorrow, final fantasy tactics advance, drill dozer, pokemon yellow</li>
@@ -81,29 +80,24 @@
             <li>n64: banjo tooie, harvest moon 64, jet force gemini, mystical ninja, turok dinosaur hunter, yoshi’s story</li>
             <li>nintendo ds: advance wars: days of ruin, castlevania: dawn of sorrow, castlevania: order of ecclesia, mario and luigi: partners in time</li>
           </li>
-
           <li>flash games: abuda the alien, battle beavers, controlcraft 2, age of war, age of war 2, amorphous, bubble spinner, crush the castle, crush the castle 2, epic battle fantasy, epic battle fantasy 2, epic battle fantasy 3, fancy pants adventure 3, flood runner 2, flood runner 3, dragon boy 2, neon rider, pandemic 2, stick war, stick war 2, ultimate flash sonic, zombocalpyse, zombotron, zombotron 2, three line, bike champ, bike champ 2, corporation inc, shop empire fable, wubzzy’s amazing adventure</li>
           <li>nitrome games: canopy, cave chaos, changetype(), cheese dreams, chisel, chisel 2, ditto, feed me, final ninja, frost bite, frost bite 2, ice breaker, mutiny, nitrome must die, oodlegobs, super treadmill, swindler, test subject arena, test subject complete, twin shot, twin shot 2</li>
           <li>flipline games: cactus mccoy, cactus mccoy 2, papa louie, papa louie 2, papa louie 3, steak and jake, steak and jake: midnight march</li>
           <li>other games: backrooms 2d, basket random, csgo clicker, doom, funny shooter 2, gun fest, infinite craft, lows adventures 2, pako highway, recoil, run 3 plus, slope city, state io, sudoku, superhero drop, balloon run, crazy tunnel 3d, eaglercraft 1.8, geometry dash sky, gold digger frvr, hexgl, house of hazards, pick crafter, precision client, subway runner, xx142-b2.exe</li>
-
-          </ul>
-          </li>
-
-          <li>added 4 apps:</li>
-          <ul>
-            <li>calculator: a simple calculator, allowing you to perform simple addition, subtraction, multiplication and division</li>
-            <li>etch a sketch: create digital pixel drawings - mimicking the experience of an etch-a-sketch with quality of life features</li>
-            <li>zip opener: directly upload and view/download individual files inside a zip archive</li>
-            <li>godoblocks: a mimick of the 2005 roblox beta era - recreated entirely in godot</li>
-          </ul>
-
-          </li>
-          <li>fixed friday night funkin & drift hunters</li>
         </ul>
-
+        </li>
+        <li>added 4 apps:</li>
+        <ul>
+          <li>calculator: a simple calculator, allowing you to perform simple addition, subtraction, multiplication and division</li>
+          <li>etch a sketch: create digital pixel drawings - mimicking the experience of an etch-a-sketch with quality of life features</li>
+          <li>zip opener: directly upload and view/download individual files inside a zip archive</li>
+          <li>godoblocks: a mimick of the 2005 roblox beta era - recreated entirely in godot</li>
+        </ul>
+        </li>
+        <li>fixed friday night funkin & drift hunters</li>
+        </ul>
+        </li>
         <br>
-
         <li>settings overhaul
           <ul>
             <li>new data management section
@@ -112,7 +106,6 @@
                 <li>clear all data off the site with the clear data button</li>
               </ul>
             </li>
-
             <li>new panic mode
               <ul>
                 <li>customise a panic key (defaults to ctrl+shift+p)</li>
@@ -120,14 +113,12 @@
                 <li>perform the shortcut on any page to instantly delete all contents of the site and redirect to the panic url</li>
               </ul>
             </li>
-
             <li>custom theme updates
               <ul>
                 <li>added ability to export and import custom themes directly into the site, allowing for ease of access switching + sharability</li>
                 <li>custom themes now do not require a refresh of the page every time</li>
               </ul>
             </li>
-
             <li>new theme: ghostly - an abandoned town, said to be haunted by spirits lurking within</li>
             <li>added open games in same tab setting</li>
             <li>fixed tab cloaking not working on lots of pages, now works globally</li>
@@ -136,7 +127,6 @@
             <li>significantly improved animation</li>
           </ul>
         </li>
-
         <li>seraphim - mobile update
           <ul>
             <li>mobile version is now detachable from seraph and can be hosted separately</li>
@@ -152,7 +142,6 @@
             <li>adjusted meta tags to fit the site</li>
           </ul>
         </li>
-
         <li>updates page
           <ul>
             <li>update log page is now a dropdown menu instead of a long page - scales down from version 10 all the way to version 1</li>
@@ -160,7 +149,6 @@
             <li>fixed header glowing bug on page, making a weird background effect</li>
           </ul>
         </li>
-
         <li>other changes
           <ul>
             <li>homepage now has dedicated big settings button</li>
@@ -181,10 +169,8 @@
             <li>css stylesheets have been renamed to make it easier to sort through</li>
           </ul>
         </li>
-
         </ul>
       </div>
-
       <div id="updConfirmFrame"><button id="updConfirm">okay</button></div>
     </div>
 
@@ -216,41 +202,54 @@
         </div>
       </div>
 
-      <!-- Added: download button -->
+      <!-- Added: Download button + status -->
       <div class="offline-row">
         <button id="offlineDownloadBtn" type="button">⬇️ download for offline</button>
         <span id="cache-status">offline ready ✅</span>
       </div>
 
       <br>
-      <a href="https://github.com/abiramisbn" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">˗ˏˋ❀ website created/developed by @AbiramiSBN ❀ ´ˎ˗</a>
+
+      <p class="linkp">
+        <a href="/seraphim/index.html">mobile</a> •
+        <a href="host.html">rehost</a> •
+        <a id="openBlankLink" href="#" role="button">open blank</a>
+      </p>
+      <p class="linkp">
+        <a href="https://discord.gg/ZyZDmx3zuQ" target="_blank" rel="noopener noreferrer">discord</a> •
+        <a href="updatelog.html">update log</a> •
+        <a href="https://github.com/a456pur/seraph" target="_blank" rel="noopener noreferrer">source code</a>
+      </p>
+
+      <br>
+      <a href="https://github.com/a456pur" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+        ˗ˏˋ❀ website created/developed by @a456pur ❀ ´ˎ˗
+      </a>
     </div>
 
-    <!-- SW register (kept same idea, just hardened) -->
+    <!-- SW registration (same idea as yours, hardened + supports cached message object) -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/offline-worker.js')
-            .then(function(registration) {
-              console.log('service worker initalised! scope:', registration.scope);
+          navigator.serviceWorker.register('/offline-worker.js').then(function(registration) {
+            console.log('service worker initalised! scope:', registration.scope);
 
-              navigator.serviceWorker.addEventListener('message', function(event) {
-                const data = event.data;
-                const isCached = (data === 'cached') || (data && data.type === 'cached');
-                if (isCached) {
-                  const el = document.getElementById('cache-status');
-                  if (el) el.style.display = 'block';
-                }
-              });
-            })
-            .catch(function(error) {
-              console.log('ack, error with serviceworker! ', error);
+            navigator.serviceWorker.addEventListener('message', function(event) {
+              const data = event.data;
+              const isCached = (data === 'cached') || (data && data.type === 'cached');
+              if (isCached) {
+                const el = document.getElementById('cache-status');
+                if (el) el.style.display = 'inline-block';
+              }
             });
+          }, function(error) {
+            console.log('ack, error with serviceworker! ', error);
+          });
         });
       }
     </script>
 
-    <!-- Download button logic (minimal) -->
+    <!-- Added: download button logic -->
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         var btn = document.getElementById('offlineDownloadBtn');
@@ -262,26 +261,23 @@
             return;
           }
 
-          // If SW just installed, controller may be null until reload
+          // If SW just installed, controller is null until reload.
           if (!navigator.serviceWorker.controller) {
-            alert("offline setup installed — reload once, then click download again.");
+            alert("offline installed — reload once, then click download again.");
             return;
           }
 
           btn.disabled = true;
-          var old = btn.textContent;
+          var original = btn.textContent;
           btn.textContent = "downloading...";
 
-          // Tell SW to cache the shell. (Your SW must handle DOWNLOAD_CORE)
-          navigator.serviceWorker.controller.postMessage({ type: 'DOWNLOAD_CORE' });
+          // Match the SW handler
+          navigator.serviceWorker.controller.postMessage({ type: 'DOWNLOAD_FOR_OFFLINE' });
 
           setTimeout(function () {
             btn.disabled = false;
-            btn.textContent = old;
-            // we also show status optimistically; SW can send 'cached' to confirm
-            var status = document.getElementById('cache-status');
-            if (status) status.style.display = 'block';
-          }, 800);
+            btn.textContent = original;
+          }, 900);
         });
       });
     </script>
@@ -319,6 +315,7 @@
           }
         }, initialDelay);
       }
+
       type();
     </script>
 
