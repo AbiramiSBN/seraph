@@ -144,6 +144,11 @@
       <div class="content-side">
           <h1 class="typewriter"><span id="cursor"></span></h1>
           <h2>version 10</h2>
+          <div style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button id="downloadOfflineBtn" style="cursor:pointer;">download for offline</button>
+            <span id="offlineStatus" style="display:none;">preparing…</span>
+          </div>
+
           <br>
 
           <div class="button-container">
@@ -172,6 +177,8 @@
 
           <br>
 
+          <p class="linkp"><a href="/seraphim/index.html">mobile</a> <a id="openBlankLink">open blank</a></p>
+          <p class="linkp"><a href="updatelog.html">update log</a>
           
           <br>
           <a href="https://github.com/AbiramiSBN" target="_blank" style="text-decoration: none;">˗ˏˋ website created/developed by @AbiramiSBN ´ˎ˗</a>
@@ -179,23 +186,61 @@
       </div>
 
       <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/offline-worker.js').then(function(registration) {
-                    console.log('service worker initalised! scope:', registration.scope);
-        
-                    navigator.serviceWorker.addEventListener('message', function(event) {
-                        if (event.data === 'cached') {
-                            document.getElementById('cache-status').style.display = 'block';
-                        }
-                    });
-                }, function(error) {
-                    console.log('ack, error with serviceworker! ', error);
-                });
-            });
-        }
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
 
-      </script>
+    let swReady = false;
+
+    function setStatus(text, show=true) {
+      const el = document.getElementById('offlineStatus');
+      if (!el) return;
+      el.textContent = text;
+      el.style.display = show ? 'inline' : 'none';
+    }
+
+    window.addEventListener('load', async function () {
+      try {
+        const reg = await navigator.serviceWorker.register('/offline-worker.js');
+        console.log('service worker initialised! scope:', reg.scope);
+
+        // controller may not exist until a refresh; this handles first install
+        if (navigator.serviceWorker.controller) swReady = true;
+
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          swReady = true;
+        });
+
+        navigator.serviceWorker.addEventListener('message', function (event) {
+          const msg = event.data;
+          if (!msg) return;
+
+          if (msg.type === 'OFFLINE_PROGRESS') {
+            setStatus(`offline caching: ${msg.done}/${msg.total}`);
+          } else if (msg.type === 'OFFLINE_DONE') {
+            setStatus('offline ready ✅');
+          } else if (msg.type === 'OFFLINE_ERROR') {
+            setStatus(`offline error: ${msg.error || 'unknown'}`);
+          }
+        });
+      } catch (e) {
+        console.log('ack, error with serviceworker! ', e);
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      const btn = e.target && e.target.id === 'downloadOfflineBtn' ? e.target : null;
+      if (!btn) return;
+
+      if (!navigator.serviceWorker.controller && !swReady) {
+        setStatus('installing offline… refresh once and click again');
+        return;
+      }
+
+      setStatus('starting offline caching…');
+      navigator.serviceWorker.controller.postMessage({ type: 'CACHE_ALL_FROM_MANIFEST', manifestUrl: '/offline-manifest.txt' });
+    });
+  })();
+</script>
 
       <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -275,9 +320,160 @@
       <script src="storage/js/cloak.js"></script>
       <script src="storage/js/theme.js"></script>
       <script src="storage/js/cookie.js"></script>
-  </body>
-</html>
+  
+<!-- Seraph Offline Pack -->
+<style>
+  .seraph-offline{position:fixed;right:16px;bottom:16px;z-index:99999;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .seraph-offline .card{backdrop-filter: blur(10px); background: rgba(0,0,0,.55); color:#fff; border:1px solid rgba(255,255,255,.18);
+    border-radius:14px; padding:12px 12px; width:min(340px, calc(100vw - 32px)); box-shadow:0 18px 60px rgba(0,0,0,.45)}
+  .seraph-offline button{border:1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.10); color:#fff;
+    padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:600}
+  .seraph-offline button:hover{background: rgba(255,255,255,.18)}
+  .seraph-offline .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .seraph-offline .muted{opacity:.8; font-size:12px; line-height:1.3}
+  .seraph-offline .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:11px; opacity:.9}
+  .seraph-offline .bar{height:10px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; margin-top:8px}
+  .seraph-offline .bar > div{height:100%; width:0% ; background: rgba(255,255,255,.85)}
+</style>
+<div class="seraph-offline" aria-live="polite">
+  <div class="card">
+    <div class="row">
+      <button id="seraphOfflineBtn">Download for offline</button>
+      <button id="seraphOfflineResume" style="display:none">Resume</button>
+      <button id="seraphOfflineStop" style="display:none">Stop</button>
+    </div>
+    <div class="muted" id="seraphOfflineStatus">Offline pack not started.</div>
+    <div class="bar" aria-hidden="true"><div id="seraphOfflineBar"></div></div>
+    <div class="mono" id="seraphOfflineDetail"></div>
+  </div>
+</div>
+<script>
+(() => {
+  const btn = document.getElementById('seraphOfflineBtn');
+  const resumeBtn = document.getElementById('seraphOfflineResume');
+  const stopBtn = document.getElementById('seraphOfflineStop');
+  const statusEl = document.getElementById('seraphOfflineStatus');
+  const detailEl = document.getElementById('seraphOfflineDetail');
+  const barEl = document.getElementById('seraphOfflineBar');
 
+  let total = null;
+  let next = 0;
+  let running = false;
+  let stopped = false;
+  const batchSize = 300;
+
+  function setProgress(done, tot) {
+    const pct = tot ? Math.min(100, Math.floor((done / tot) * 100)) : 0;
+    barEl.style.width = pct + '%';
+  }
+
+  async function ensureSW() {
+    if (!('serviceWorker' in navigator)) {
+      statusEl.textContent = 'Service workers not supported in this browser.';
+      return null;
+    }
+    try {
+      const reg = await navigator.serviceWorker.register('/offline-worker.js');
+      await navigator.serviceWorker.ready;
+      return reg;
+    } catch (e) {
+      statusEl.textContent = 'Service worker registration failed: ' + (e && e.message ? e.message : e);
+      return null;
+    }
+  }
+
+  function sendStart(startAt) {
+    const ctrl = navigator.serviceWorker.controller;
+    if (!ctrl) {
+      statusEl.textContent = 'Service worker not controlling this page yet. Reload once and try again.';
+      return;
+    }
+    running = true;
+    stopped = false;
+    stopBtn.style.display = 'inline-block';
+    resumeBtn.style.display = 'none';
+    ctrl.postMessage({ type: 'CACHE_MANIFEST_BATCH', startAt, batchSize });
+  }
+
+  btn.addEventListener('click', async () => {
+    const reg = await ensureSW();
+    if (!reg) return;
+    statusEl.textContent = 'Starting offline download… (this may take a while)';
+    detailEl.textContent = '';
+    next = 0;
+    total = null;
+    setProgress(0, 1);
+    sendStart(0);
+  });
+
+  resumeBtn.addEventListener('click', async () => {
+    const reg = await ensureSW();
+    if (!reg) return;
+    statusEl.textContent = 'Resuming offline download…';
+    sendStart(next);
+  });
+
+  stopBtn.addEventListener('click', () => {
+    stopped = true;
+    running = false;
+    stopBtn.style.display = 'none';
+    resumeBtn.style.display = 'inline-block';
+    statusEl.textContent = 'Stopped. You can resume.';
+  });
+
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const msg = event.data || {};
+    if (msg.type === 'MANIFEST_INFO') {
+      total = msg.total;
+      statusEl.textContent = `Offline caching started: 0/${total}`;
+      setProgress(0, total);
+      return;
+    }
+    if (msg.type === 'CACHE_PROGRESS') {
+      total = msg.total ?? total;
+      next = msg.next ?? next;
+      statusEl.textContent = `Offline caching: ${msg.done}/${total}`;
+      detailEl.textContent = msg.last || '';
+      setProgress(msg.done, total);
+      return;
+    }
+    if (msg.type === 'BATCH_DONE') {
+      total = msg.total ?? total;
+      next = msg.next;
+      if (stopped) return;
+      if (next < total) {
+        // queue next chunk
+        sendStart(next);
+      } else {
+        running = false;
+        stopBtn.style.display = 'none';
+        resumeBtn.style.display = 'none';
+        statusEl.textContent = 'Offline ready ✅';
+        detailEl.textContent = '';
+        setProgress(total, total);
+      }
+      return;
+    }
+    if (msg.type === 'CACHE_ERROR') {
+      // non-fatal; keep going
+      detailEl.textContent = `Skip: ${msg.url} (${msg.error || 'error'})`;
+      return;
+    }
+    if (msg.type === 'QUOTA_STOP') {
+      running = false;
+      stopBtn.style.display = 'none';
+      resumeBtn.style.display = 'inline-block';
+      statusEl.textContent = 'Stopped: storage quota reached. You may need to cache fewer files.';
+      detailEl.textContent = msg.last || '';
+      return;
+    }
+  });
+})();
+</script>
+<!-- /Seraph Offline Pack -->
+
+</body>
+</html>
 
 
 
