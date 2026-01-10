@@ -173,11 +173,10 @@
 
           <br>
 
-          <p class="linkp"><a href="/seraphim/index.html">mobile</a> <a id="openBlankLink">open blank</a></p>
-          <p class="linkp"><a href="updatelog.html">update log</a>
-          
+          <p class="linkp"><a href="/seraphim/index.html">mobile</a> <a id="openBlankLink" href="#" role="button">open blank</a></p>
+          <p class="linkp"><a href="updatelog.html">update log</a></p>
           <br>
-          <a href="https://github.com/AbiramiSBN" target="_blank" style="text-decoration: none;">˗ˏˋ website created/developed by @AbiramiSBN ´ˎ˗</a>
+          <a href="https://github.com/AbiramiSBN" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">˗ˏˋ website created/developed by @AbiramiSBN ´ˎ˗</a>
         
       </div>
 
@@ -239,9 +238,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var openBlankLink = document.getElementById('openBlankLink');
-            if (openBlankLink) {
         
-            openBlankLink.addEventListener('click', function(event) {
+            if (openBlankLink) openBlankLink.addEventListener('click', function(event) {
                 event.preventDefault();
         
                 var newTab = window.open('about:blank', '_blank');
@@ -265,7 +263,6 @@
                                 event.preventDefault();
                                 iframe.contentWindow.location.href = link.href;
                             });
-            }
                         });
                     };
         
@@ -282,5 +279,3 @@
       <script src="storage/js/cookie.js"></script>
   </body>
 </html>
-
-
