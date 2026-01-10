@@ -9,7 +9,7 @@ const CACHE_NAME = `${VERSION}-all`;
 const MANIFEST_URL = "/offline-manifest.txt";
 
 // Tune these:
-const CONCURRENCY = 6;          // 4–8 is usually safe
+const CONCURRENCY = 2;          // 4–8 is usually safe
 const PER_FILE_TIMEOUT = 25000; // 25s
 const RETRIES = 1;              // retry once on transient failures
 
