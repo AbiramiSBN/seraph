@@ -176,7 +176,7 @@
           <p class="linkp"><a href="/seraphim/index.html">mobile</a> <a id="openBlankLink" href="#" role="button">open blank</a></p>
           <p class="linkp"><a href="updatelog.html">update log</a></p>
           <br>
-          <a href="https://github.com/AbiramiSBN" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">˗ˏˋ website created/developed by @AbiramiSBN ´ˎ˗</a>
+          <a href="https://github.com/AbiramiSBN" target="_blank" style="text-decoration: none;" rel="noopener noreferrer">˗ˏˋ website created/developed by @AbiramiSBN ´ˎ˗</a>
         
       </div>
 
@@ -236,46 +236,39 @@
       </script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var openBlankLink = document.getElementById('openBlankLink');
-        
-            if (openBlankLink) openBlankLink.addEventListener('click', function(event) {
-                event.preventDefault();
-        
-                var newTab = window.open('about:blank', '_blank');
-        
-                if (newTab) {
-                    var newTabBody = newTab.document.body;
-                    newTabBody.style.padding = '0';
-                    newTabBody.style.margin = '0';
-                    newTabBody.style.border = 'hidden';
-        
-                    var iframe = document.createElement('iframe');
-                    iframe.src = window.location.href;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'hidden';
+  // Open Seraph in an about:blank tab (useful for bypassing some iframe restrictions)
+  document.addEventListener('DOMContentLoaded', () => {
+    const openBlankLink = document.getElementById('openBlankLink');
+    if (!openBlankLink) return;
 
-                    iframe.onload = function() {
-                        var links = iframe.contentDocument.querySelectorAll('a[target="_blank"]');
-                        links.forEach(function(link) {
-                            link.addEventListener('click', function(event) {
-                                event.preventDefault();
-                                iframe.contentWindow.location.href = link.href;
-                            });
-                        });
-                    };
-        
-                    newTab.document.body.appendChild(iframe);
-                } else {
-                    alert("couldn't manage to open a new tab :(");
-                }
-            });
-        });
-        </script>    
+    openBlankLink.addEventListener('click', (event) => {
+      event.preventDefault();
 
-      <script src="storage/js/cloak.js"></script>
+      const newTab = window.open('about:blank', '_blank');
+      if (!newTab) {
+        alert("couldn't manage to open a new tab :(");
+        return;
+      }
+
+      const doc = newTab.document;
+      doc.title = 'Seraph';
+      doc.body.style.padding = '0';
+      doc.body.style.margin = '0';
+      doc.body.style.overflow = 'hidden';
+
+      const iframe = doc.createElement('iframe');
+      iframe.src = window.location.href;
+      iframe.style.width = '100vw';
+      iframe.style.height = '100vh';
+      iframe.style.border = '0';
+      doc.body.appendChild(iframe);
+    });
+  });
+</script>
+<script src="storage/js/cloak.js"></script>
       <script src="storage/js/theme.js"></script>
       <script src="storage/js/cookie.js"></script>
   </body>
 </html>
+
+
