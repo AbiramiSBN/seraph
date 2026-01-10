@@ -1,18 +1,21 @@
 /* offline-worker.js
-   Downloads EVERYTHING listed in /offline-manifest.txt (except .github)
-   Chunked caching + progress messages to avoid dying mid-way.
+   - Caches everything in /offline-manifest.txt (excluding .github)
+   - Uses limited concurrency + timeouts so it doesn’t freeze on one file
+   - Sends progress + current path back to the page
 */
-const VERSION = "seraph-full-offline-v1";
+const VERSION = "seraph-full-offline-v3";
 const CACHE_NAME = `${VERSION}-all`;
 
 const MANIFEST_URL = "/offline-manifest.txt";
-const CHUNK_SIZE = 250;        // adjust 100-400 if needed
-const PER_FILE_TIMEOUT = 20000; // 20s per file
+
+// Tune these:
+const CONCURRENCY = 6;          // 4–8 is usually safe
+const PER_FILE_TIMEOUT = 25000; // 25s
+const RETRIES = 1;              // retry once on transient failures
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
     self.skipWaiting();
-    // Precache just "/" so UI loads even before full download
     const cache = await caches.open(CACHE_NAME);
     try { await cache.add("/"); } catch {}
   })());
@@ -21,7 +24,9 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.map(k => (k.startsWith("seraph-full-offline-") && k !== CACHE_NAME) ? caches.delete(k) : null));
+    await Promise.all(
+      keys.map(k => (k.startsWith("seraph-full-offline-") && k !== CACHE_NAME) ? caches.delete(k) : null)
+    );
     await self.clients.claim();
   })());
 });
@@ -33,27 +38,12 @@ async function postToAll(msg) {
 
 function isCacheablePath(p) {
   if (!p || typeof p !== "string") return false;
-
-  // only same-origin absolute paths
   if (!p.startsWith("/")) return false;
-
-  // skip .github + git + obvious junk
   if (p.startsWith("/.github/")) return false;
   if (p.startsWith("/.git/")) return false;
-  if (p.endsWith("/.DS_Store") || p.endsWith(".DS_Store")) return false;
-
+  if (p.includes("/node_modules/")) return false;
+  if (p.endsWith(".DS_Store")) return false;
   return true;
-}
-
-async function fetchWithTimeout(req) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), PER_FILE_TIMEOUT);
-  try {
-    const res = await fetch(req, { signal: controller.signal, cache: "no-store" });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
 }
 
 async function readManifestList() {
@@ -61,7 +51,6 @@ async function readManifestList() {
   if (!res.ok) throw new Error(`manifest fetch failed: ${res.status}`);
   const text = await res.text();
 
-  // Your manifest may contain section headers (png/jpg/js). We ignore non-/ lines.
   const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
 
   const paths = [];
@@ -71,13 +60,53 @@ async function readManifestList() {
     paths.push(line);
   }
 
-  // Always include homepage + menus
+  // Always include core pages
   for (const must of ["/", "/index.html", "/games/index.html", "/apps/index.html", "/settings.html"]) {
     if (!paths.includes(must) && isCacheablePath(must)) paths.unshift(must);
   }
 
-  // de-dupe
   return [...new Set(paths)];
+}
+
+function withTimeout(promise, ms) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ms);
+  return { controller, wrapped: (async () => {
+    try { return await promise(controller.signal); }
+    finally { clearTimeout(timeout); }
+  })()};
+}
+
+async function fetchAndCache(cache, path) {
+  const req = new Request(path, { cache: "no-store" });
+
+  // If already cached, skip quickly
+  const existing = await cache.match(req);
+  if (existing) return { ok: true, skipped: true, status: 200 };
+
+  for (let attempt = 0; attempt <= RETRIES; attempt++) {
+    try {
+      const { wrapped } = withTimeout(async (signal) => {
+        // IMPORTANT: same-origin only
+        const res = await fetch(req, { signal, cache: "no-store", redirect: "follow" });
+        return res;
+      }, PER_FILE_TIMEOUT);
+
+      const res = await wrapped;
+
+      // Skip non-OK (404 etc). Don’t hang.
+      if (!res || !res.ok) return { ok: false, status: res ? res.status : 0 };
+
+      // Cache it
+      await cache.put(req, res.clone());
+      return { ok: true, skipped: false, status: res.status };
+    } catch (e) {
+      // retry once on transient abort/network
+      if (attempt >= RETRIES) return { ok: false, status: 0, err: String(e?.message || e) };
+    }
+  }
+
+  return { ok: false, status: 0 };
 }
 
 async function cacheAllFromManifest() {
@@ -86,49 +115,54 @@ async function cacheAllFromManifest() {
 
   let done = 0;
   let failed = 0;
+  let skipped = 0;
 
   await postToAll({ type: "offline-total", total: list.length });
 
-  // Chunked to avoid SW watchdog kills
-  for (let i = 0; i < list.length; i += CHUNK_SIZE) {
-    const chunk = list.slice(i, i + CHUNK_SIZE);
+  // Simple worker pool
+  let idx = 0;
 
-    // fetch+put each file (best-effort)
-    for (const path of chunk) {
-      try {
-        const req = new Request(path, { cache: "no-store" });
-        const res = await fetchWithTimeout(req);
-        if (res.ok) {
-          await cache.put(req, res.clone());
-          done++;
-        } else {
-          failed++;
-        }
-      } catch {
+  async function worker(workerId) {
+    while (true) {
+      const i = idx++;
+      if (i >= list.length) return;
+
+      const path = list[i];
+
+      // tell page what file we’re on (helps debug “stuck at N”)
+      await postToAll({ type: "offline-current", index: i + 1, total: list.length, path });
+
+      const r = await fetchAndCache(cache, path);
+
+      if (r.ok) {
+        if (r.skipped) skipped++;
+        else done++;
+      } else {
         failed++;
       }
 
-      // progress ping (don’t spam too hard)
-      if ((done + failed) % 25 === 0) {
-        await postToAll({ type: "offline-progress", done, failed, total: list.length });
+      // progress update every ~10 processed items across all workers
+      const processed = done + failed + skipped;
+      if (processed % 10 === 0) {
+        await postToAll({ type: "offline-progress", done, failed, skipped, total: list.length });
       }
     }
-
-    // yield control between chunks
-    await postToAll({ type: "offline-progress", done, failed, total: list.length });
-    await new Promise(r => setTimeout(r, 50));
   }
 
-  await postToAll({ type: "offline-finished", done, failed, total: list.length });
+  await postToAll({ type: "offline-start" });
+
+  // start pool
+  const pool = Array.from({ length: CONCURRENCY }, (_, n) => worker(n));
+  await Promise.all(pool);
+
+  await postToAll({ type: "offline-finished", done, failed, skipped, total: list.length });
 }
 
 self.addEventListener("message", (event) => {
-  const t = event.data?.type;
-  if (t !== "DOWNLOAD_FOR_OFFLINE") return;
+  if (event.data?.type !== "DOWNLOAD_FOR_OFFLINE") return;
 
   event.waitUntil((async () => {
     try {
-      await postToAll({ type: "offline-start" });
       await cacheAllFromManifest();
     } catch (e) {
       await postToAll({ type: "offline-error", message: String(e?.message || e) });
@@ -146,7 +180,6 @@ self.addEventListener("fetch", (event) => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
 
-    // HTML: network-first (fresh online), fallback to cache when offline
     const accept = req.headers.get("accept") || "";
     const isHTML = req.mode === "navigate" || accept.includes("text/html");
 
@@ -160,7 +193,6 @@ self.addEventListener("fetch", (event) => {
       }
     }
 
-    // Assets: cache-first
     const cached = await cache.match(req);
     if (cached) return cached;
 
